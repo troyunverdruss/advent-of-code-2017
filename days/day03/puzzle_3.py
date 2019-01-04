@@ -4,7 +4,7 @@ from collections import deque
 from helpers import manhattan_distance, Point
 
 
-def traverse_grid(origin, side_length, target_max):
+def traverse_grid(origin, side_length, input, target_max=None):
     if target_max == 1:
         return origin
 
@@ -33,19 +33,19 @@ def traverse_grid(origin, side_length, target_max):
     temp_side_limit = 1
     inc_toggle = True
 
-    while i <= target_max:
+    while i <= input:
 
         for l in range(0, temp_side_limit):
             cell += d[0]
 
-            if i == target_max:
+            if i == input:
                 return cell
 
             value = compute_value(cell, grid)
             grid[cell.x][cell.y] = value
 
-            if value > target_max:
-                print('Found larger than target value: {}'.format(value))
+            if target_max is not None and value > target_max:
+                print('Part 2: found larger than target value: {}'.format(value))
                 exit()
 
             i += 1
@@ -78,22 +78,21 @@ def compute_value(cell, grid):
     return value
 
 
-def solve_3a(input):
-    side_length = math.ceil(math.sqrt(input))
-    if side_length % 2 == 0:
-        side_length += 3
+def solve_3(input, target_max=None):
+    # Adding 5 to give us some buffer
+    side_length = math.ceil(math.sqrt(input)) + 5
 
     center_index = math.floor(side_length / 2.0)
     origin = Point(x=center_index, y=center_index, id=1)
 
-    target = traverse_grid(origin, side_length, input)
+    target = traverse_grid(origin, side_length, input, target_max)
 
     return manhattan_distance(origin, target)
 
 
 if __name__ == '__main__':
-    r = solve_3a(289326)
+    r = solve_3(289326)
     print('Part 1: {}'.format(r))
 
-    # r = solve_3b(entries)
-    # print('Part 2: {}'.format(r))
+    r = solve_3(289326, 289326)
+    print('Part 2: {}'.format(r))

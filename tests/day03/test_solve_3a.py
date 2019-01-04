@@ -1,21 +1,17 @@
 from unittest import TestCase
 
-from days.day03.puzzle_3 import solve_3a
+from days.day03.puzzle_3 import solve_3
 
 
-class TestSolve_3a(TestCase):
-    def test_1(self):
-        r = solve_3a(1)
-        self.assertEqual(0, r)
-
+class TestSolve3(TestCase):
     def test_2(self):
-        r = solve_3a(12)
+        r = solve_3(12)
         self.assertEqual(3, r)
 
     def test_3(self):
-        r = solve_3a(23)
+        r = solve_3(23)
         self.assertEqual(2, r)
 
     def test_4(self):
-        r = solve_3a(1024)
+        r = solve_3(1024)
         self.assertEqual(31, r)
