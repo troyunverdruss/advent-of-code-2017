@@ -12,7 +12,7 @@ echo "if __name__ == '__main__':" >> ${PUZZLE}
 echo "    r = solve_${1}()" >> ${PUZZLE}
 
 TEST=tests/day${1}/test_${1}.py
-touch ${TEST}/__init__.py
+touch `dirname ${TEST}`/__init__.py
 echo "from unittest import TestCase" > ${TEST}
 echo "" >> ${TEST}
 echo "from days.day${1}.puzzle_${1} import solve_${1}" >> ${TEST}
@@ -21,3 +21,6 @@ echo "" >> ${TEST}
 echo "class TestSolve${1}(TestCase):" >> ${TEST}
 echo "    pass" >> ${TEST}
 
+git add ${PUZZLE}
+git add ${TEST}
+git add `dirname ${TEST}`/__init__.py
