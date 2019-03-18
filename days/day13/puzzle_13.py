@@ -1,7 +1,3 @@
-import sys
-from collections import deque
-
-sys.path.append('/Users/troy/Documents/code/advent-of-code-2017')
 from helpers import read_raw_entries
 
 
@@ -10,24 +6,13 @@ class SimpleLayer:
         self.depth = depth
         self.range = _range
         self.severity = depth * _range
+        self.positions = _range * 2 - 2
 
-
-class Layer:
-    def __init__(self, depth, _range):
-        self.depth = depth
-        self.range = _range
-
-        valid_positions = list(range(0, _range)) + list(range(_range - 2, 0, -1))
-        self.scanner_positions = deque(valid_positions)
-
-    def tick(self):
-        self.scanner_positions.rotate(1)
-
-    def scanner_position(self):
-        return self.scanner_positions[0]
-
-    def severity(self):
-        return self.depth * self.range
+    def compute_collision(self, delay):
+        loc_at_time = (self.depth + delay) % self.positions
+        if loc_at_time == 0:
+            return True, self.severity
+        return False, 0
 
 
 def solve_13(entries, delay=0, end_on_catch=False):
@@ -35,27 +20,14 @@ def solve_13(entries, delay=0, end_on_catch=False):
 
     for entry in entries:
         vals = list(map(int, entry.split(':')))
-        layers[vals[0]] = Layer(vals[0], vals[1])
-
-    for _ in range(0, delay):
-        for layer in layers.values():
-            layer.tick()
+        layers[vals[0]] = SimpleLayer(vals[0], vals[1])
 
     total_severity = 0
-    my_depth = 0
-    for depth in range(0, max(layers.keys()) + 1):
-        if depth in layers and layers[my_depth].scanner_position() == 0:
-            total_severity += layers[my_depth].severity()
-            del layers[my_depth]
-
-            # Bail out for part 2
-            if end_on_catch:
-                return -1
-
-        for layer in layers.values():
-            layer.tick()
-
-        my_depth += 1
+    for layer in layers.values():
+        collision, severity = layer.compute_collision(delay)
+        if end_on_catch and collision:
+            return -1
+        total_severity += severity
 
     return total_severity
 
@@ -67,7 +39,6 @@ def solve_13b(entries):
     while computed_severity != 0:
         delay += 1
         computed_severity = solve_13(entries, delay, True)
-        # print('delay: {}, computed severity: {}'.format(delay, computed_severity))
 
     return delay
 
