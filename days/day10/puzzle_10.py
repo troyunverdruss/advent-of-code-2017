@@ -76,6 +76,10 @@ def round(lengths, rotate_count, skip_size, string):
     return rotate_count, skip_size
 
 
+def knot_hash(input_str):
+    return solve_10b(deque(range(0, 256)), input_str)
+
+
 if __name__ == '__main__':
     entries = map(int, read_raw_entries('input_d10.txt')[0].split(','))
     r = solve_10(deque(range(0, 256)), entries)
