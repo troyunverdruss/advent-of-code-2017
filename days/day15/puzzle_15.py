@@ -1,6 +1,6 @@
-import sys
-
-sys.path.append('/Users/troy/Documents/code/advent-of-code-2017')
+# For pypy
+# import sys
+# sys.path.append('/Users/troy/Documents/code/advent-of-code-2017')
 from helpers import read_raw_entries
 
 
@@ -66,3 +66,4 @@ if __name__ == '__main__':
 
     r = solve_15b(seed_a, seed_b)
     print('part 2, 5M cycles, matched: {}'.format(r))
+    # 320
