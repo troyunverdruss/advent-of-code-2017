@@ -1,3 +1,8 @@
+import pathlib
+import sys
+
+sys.path.append(str(pathlib.Path().absolute().parent.parent))
+
 import itertools
 from collections import deque
 
