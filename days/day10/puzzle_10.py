@@ -1,7 +1,4 @@
-import pathlib
-import sys
-
-sys.path.append(str(pathlib.Path().absolute().parent.parent))
+aoc17() if 'aoc17' in dir() else None
 
 import itertools
 from collections import deque
