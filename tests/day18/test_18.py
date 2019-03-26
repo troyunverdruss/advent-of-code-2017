@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from days.day18.puzzle_18 import Soundcard
+from days.day18.puzzle_18 import Soundcard, SoundcardPair
 
 
 class TestSolve18(TestCase):
@@ -17,6 +17,22 @@ class TestSolve18(TestCase):
             'set a 1',
             'jgz a -2',
         ]
-        soundcard = Soundcard()
-        value = soundcard.process_instructions(instructions)
+        soundcard = Soundcard(instructions)
+        value = soundcard.process_instructions()
         self.assertEqual(value, 4)
+
+    def test_part_2(self):
+        instructions = [
+            'snd 1',
+            'snd 2',
+            'snd p',
+            'rcv a',
+            'rcv b',
+            'rcv c',
+            'rcv d',
+        ]
+
+        soundcard_pair = SoundcardPair(instructions)
+        soundcard_pair.run()
+
+        self.assertEqual(3, soundcard_pair.card_1.snd_count)
