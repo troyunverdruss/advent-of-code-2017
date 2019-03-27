@@ -43,6 +43,9 @@ class Point:
     def __str__(self):
         return '{}({},{})'.format(self.id, self.x, self.y)
 
+    def tup(self):
+        return self.x, self.y
+
 
 def manhattan_distance(a: Point, b: Point) -> int:
     return abs(a.x - b.x) + abs(a.y - b.y)
