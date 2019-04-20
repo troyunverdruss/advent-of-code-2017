@@ -5,6 +5,7 @@ import math
 from collections import deque, Counter
 from copy import copy
 
+aoc17() if 'aoc17' in dir() else None
 from helpers import read_raw_entries
 
 logging.basicConfig(level=logging.INFO)

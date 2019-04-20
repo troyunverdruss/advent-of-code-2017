@@ -1,3 +1,4 @@
+import math
 from pathlib import Path
 
 
@@ -81,3 +82,11 @@ def manhattan_distance(a: Point, b: Point) -> int:
 
 def manhattan_distance_3d(a: Point3d, b: Point3d) -> int:
     return abs(a.x - b.x) + abs(a.y - b.y) + abs(a.z - b.z)
+
+
+def prime(n):
+    for i in range(2, math.ceil(math.sqrt(n)) + 1):
+        if n % i == 0:
+            return False
+
+    return True
