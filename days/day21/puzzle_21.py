@@ -2,7 +2,7 @@ import itertools
 import logging
 # m = [[(i*3) + j for j in range(3)] for i in range(3)]
 import math
-from collections import deque, Counter
+from collections import deque, Counter, defaultdict
 from copy import copy
 
 aoc17() if 'aoc17' in dir() else None
@@ -79,56 +79,106 @@ def make_rules_lookup(rules):
     return lookup
 
 
-def solve_21(entries, iterations=5):
+def solve_21(entries):
     rules = process_entries_to_rules(entries)
     rules_lookup = make_rules_lookup(rules)
+    print(len(rules_lookup))
+    for rule in sorted(rules_lookup, key=lambda r: len(rules_lookup[r].output)):
+        print('{} => {}'.format(rule, to_str(rules_lookup[rule].output)))
 
-    image = deque([
-        deque(['.', '#', '.']),
-        deque(['.', '.', '#']),
-        deque(['#', '#', '#']),
-    ])
-
-    for it in range(iterations):
-        log.info('Starting iteration: {}'.format(it))
-
-        results = deque()
-        if len(image) % 2 == 0:
-            for i in range(0, len(image), 2):
-                for j in range(0, len(image), 2):
-                    m = []
-                    m.append(list(itertools.islice(image[j], i, i + 2)))
-                    m.append(list(itertools.islice(image[j + 1], i, i + 2)))
-                    results.append(process_segment(rules_lookup, m))
-        else:
-            for i in range(0, len(image), 3):
-                for j in range(0, len(image), 3):
-                    m = []
-                    m.append(list(itertools.islice(image[j], i, i + 3)))
-                    m.append(list(itertools.islice(image[j + 1], i, i + 3)))
-                    m.append(list(itertools.islice(image[j + 2], i, i + 3)))
-                    results.append(process_segment(rules_lookup, m))
-
-        wrap = math.sqrt(len(results))
-        row_cursor = 0
-        image = deque()
-        for i in range(len(results)):
-            if i % wrap == 0 and i != 0:
-                row_cursor += len(results[0])
-
-            for r in range(len(results[i])):
-                if r + row_cursor not in image:
-                    image.append(deque())
-                for e in results[i][r]:
-                    image[r + row_cursor].append(e)
-
-        for i in range(len(image) - 1, -1, -1):
-            if len(image[i]) == 0:
-                del image[i]
+    image = run_magnifications('.#...####', 5, rules_lookup)
 
     # We're done disassembling and reassembling ...
     # time to count up # marks
     return Counter(list(to_str(image)))['#']
+
+
+def solve_21b(entries):
+    rules = process_entries_to_rules(entries)
+    rules_lookup = make_rules_lookup(rules)
+    magnification_lookup = defaultdict(lambda: [])
+
+    for key in [''.join(i) for i in itertools.product(['.', '#'], repeat=9)]:
+        image = run_magnifications(key, 3, rules_lookup)
+        carved_up = carve_into_segments(image)
+        for segment in carved_up:
+            magnification_lookup[key].append(to_str(segment))
+
+    queue = deque(['.#...####'])
+    for a in range(6):  # Note, using 6 because each lookup group is "3" iterations, so 3*6=18
+
+        for b in range(len(queue)):
+            key = queue.popleft()
+            for r in magnification_lookup[key]:
+                queue.append(r)
+        log.info('{}: {}'.format((a + 1) * 3, Counter(list(to_str(queue)))['#']))
+
+    return Counter(list(to_str(queue)))['#']
+
+
+def run_magnifications(init_square, iterations, rules_lookup):
+    image = deque([
+        deque(init_square[0:3]),
+        deque(init_square[3:6]),
+        deque(init_square[6:9]),
+    ])
+    for it in range(iterations):
+        log.debug('Starting iteration: {}'.format(it))
+
+        results = deque()
+        for r in carve_into_segments(image):
+            results.append(process_segment(rules_lookup, r))
+
+        image = reassemble_into_full_image(results)
+        for y in range(len(image)):
+            row = ''
+            for x in range(len(image[y])):
+                row += image[y][x]
+            print(row)
+        log.info('{}: {}'.format((it + 1), Counter(list(to_str(image)))['#']))
+        print('{}: {}'.format((it + 1), Counter(list(to_str(image)))['#']))
+        print()
+
+    return image
+
+
+def reassemble_into_full_image(results):
+    wrap = math.sqrt(len(results))
+    row_cursor = 0
+    image = deque()
+    for i in range(len(results)):
+        if i % wrap == 0 and i != 0:
+            row_cursor += len(results[0])
+
+        for r in range(len(results[i])):
+            if r + row_cursor not in image:
+                image.append(deque())
+            for e in results[i][r]:
+                image[r + row_cursor].append(e)
+    for i in range(len(image) - 1, -1, -1):
+        if len(image[i]) == 0:
+            del image[i]
+    return image
+
+
+def carve_into_segments(image):
+    results = deque()
+    if len(image) % 2 == 0:
+        for i in range(0, len(image), 2):
+            for j in range(0, len(image), 2):
+                m = []
+                m.append(list(itertools.islice(image[j], i, i + 2)))
+                m.append(list(itertools.islice(image[j + 1], i, i + 2)))
+                results.append(m)
+    else:
+        for i in range(0, len(image), 3):
+            for j in range(0, len(image), 3):
+                m = []
+                m.append(list(itertools.islice(image[j], i, i + 3)))
+                m.append(list(itertools.islice(image[j + 1], i, i + 3)))
+                m.append(list(itertools.islice(image[j + 2], i, i + 3)))
+                results.append(m)
+    return results
 
 
 def process_entries_to_rules(entries):
@@ -143,8 +193,9 @@ if __name__ == '__main__':
     r = solve_21(entries)
     print('part 1, number of #: {}'.format(r))
 
-    r = solve_21(entries, 18)
+    r = solve_21b(entries)
     print('part 2, number of #: {}'.format(r))
 
     # too low: 2364534
+    # correct answer: 2368161
     # too high: 2418435
