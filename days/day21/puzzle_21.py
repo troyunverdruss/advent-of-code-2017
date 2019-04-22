@@ -4,6 +4,7 @@ import logging
 import math
 from collections import deque, Counter, defaultdict
 from copy import copy
+from typing import Tuple, Dict
 
 aoc17() if 'aoc17' in dir() else None
 from helpers import read_raw_entries
@@ -21,9 +22,7 @@ class Rule:
         for row in input.split('/'):
             matrix.append(list(row))
 
-        self.output = []
-        for row in output.split('/'):
-            self.output.append(list(row))
+        self.output = output.replace('/', '')
 
         matrixes = []
         matrixes.append(matrix)
@@ -82,15 +81,12 @@ def make_rules_lookup(rules):
 def solve_21(entries):
     rules = process_entries_to_rules(entries)
     rules_lookup = make_rules_lookup(rules)
-    print(len(rules_lookup))
-    for rule in sorted(rules_lookup, key=lambda r: len(rules_lookup[r].output)):
-        print('{} => {}'.format(rule, to_str(rules_lookup[rule].output)))
 
     image = run_magnifications('.#...####', 5, rules_lookup)
 
     # We're done disassembling and reassembling ...
     # time to count up # marks
-    return Counter(list(to_str(image)))['#']
+    return Counter(list(to_str(image.values())))['#']
 
 
 def solve_21b(entries):
@@ -111,73 +107,89 @@ def solve_21b(entries):
             key = queue.popleft()
             for r in magnification_lookup[key]:
                 queue.append(r)
-        log.info('{}: {}'.format((a + 1) * 3, Counter(list(to_str(queue)))['#']))
+        log.debug('{}: {}'.format((a + 1) * 3, Counter(list(to_str(queue)))['#']))
 
     return Counter(list(to_str(queue)))['#']
 
 
 def run_magnifications(init_square, iterations, rules_lookup):
-    image = deque([
-        deque(init_square[0:3]),
-        deque(init_square[3:6]),
-        deque(init_square[6:9]),
-    ])
+    image = create_image_grid(init_square)
+
     for it in range(iterations):
         log.debug('Starting iteration: {}'.format(it))
 
         results = deque()
-        for r in carve_into_segments(image):
-            results.append(process_segment(rules_lookup, r))
+        for segment in carve_into_segments(image):
+            processed_segment = process_segment(rules_lookup, segment)
+            # print('{} => {}'.format(segment, processed_segment))
+
+            results.append(processed_segment)
 
         image = reassemble_into_full_image(results)
-        for y in range(len(image)):
-            row = ''
-            for x in range(len(image[y])):
-                row += image[y][x]
-            print(row)
-        log.info('{}: {}'.format((it + 1), Counter(list(to_str(image)))['#']))
-        print('{}: {}'.format((it + 1), Counter(list(to_str(image)))['#']))
-        print()
 
+        # Printing out the grids for debugging
+        # image_size = int(math.sqrt(len(image)))
+        # for y in range(image_size):
+        #     row = ''
+        #     for x in range(image_size):
+        #         row += image[(x, y)]
+        #     print(row)
+        log.debug('{}: {}'.format((it + 1), Counter(list(image.values()))['#']))
+        # print('{}: {}'.format((it + 1), Counter(list(image.values()))['#']))
+        # print()
+
+    return image
+
+
+def create_image_grid(init_square):
+    image = {
+        (0, 0): init_square[0], (1, 0): init_square[1], (2, 0): init_square[2],
+        (0, 1): init_square[3], (1, 1): init_square[4], (2, 1): init_square[5],
+        (0, 2): init_square[6], (1, 2): init_square[7], (2, 2): init_square[8],
+    }
     return image
 
 
 def reassemble_into_full_image(results):
-    wrap = math.sqrt(len(results))
-    row_cursor = 0
-    image = deque()
-    for i in range(len(results)):
-        if i % wrap == 0 and i != 0:
-            row_cursor += len(results[0])
+    wrap_size = int(math.sqrt(len(results)))
+    segment_size = int(math.sqrt(len(results[0])))
 
-        for r in range(len(results[i])):
-            if r + row_cursor not in image:
-                image.append(deque())
-            for e in results[i][r]:
-                image[r + row_cursor].append(e)
-    for i in range(len(image) - 1, -1, -1):
-        if len(image[i]) == 0:
-            del image[i]
+    image = {}
+    result_pos = 0
+    for y in range(0, wrap_size * segment_size, segment_size):
+        for x in range(0, wrap_size * segment_size, segment_size):
+            segment = results[result_pos]
+            segment_pos = 0
+            for coord in sorted(itertools.product(range(segment_size), repeat=2), key=lambda t: (t[1], t[0])):
+                # print((coord[0] + x, coord[1] + y))
+                image[(coord[0] + x, coord[1] + y)] = segment[segment_pos]
+                segment_pos += 1
+            result_pos += 1
+
     return image
 
 
-def carve_into_segments(image):
+def carve_into_segments(image: Dict[Tuple, str]):
     results = deque()
-    if len(image) % 2 == 0:
-        for i in range(0, len(image), 2):
-            for j in range(0, len(image), 2):
-                m = []
-                m.append(list(itertools.islice(image[j], i, i + 2)))
-                m.append(list(itertools.islice(image[j + 1], i, i + 2)))
-                results.append(m)
+    image_size = int(math.sqrt(len(image)))
+
+    if image_size % 2 == 0:
+        for y in range(0, image_size, 2):
+            for x in range(0, image_size, 2):
+                m = [
+                    image[(x, y)], image[(x + 1, y)],
+                    image[(x, y + 1)], image[(x + 1, y + 1)]
+                ]
+                results.append(''.join(m))
     else:
-        for i in range(0, len(image), 3):
-            for j in range(0, len(image), 3):
-                m = []
-                m.append(list(itertools.islice(image[j], i, i + 3)))
-                m.append(list(itertools.islice(image[j + 1], i, i + 3)))
-                m.append(list(itertools.islice(image[j + 2], i, i + 3)))
-                results.append(m)
+        for y in range(0, image_size, 3):
+            for x in range(0, image_size, 3):
+                m = [
+                    image[(x, y)], image[(x + 1, y)], image[(x + 2, y)],
+                    image[(x, y + 1)], image[(x + 1, y + 1)], image[(x + 2, y + 1)],
+                    image[(x, y + 2)], image[(x + 1, y + 2)], image[(x + 2, y + 2)],
+                ]
+                results.append(''.join(m))
     return results
 
 
@@ -195,7 +207,3 @@ if __name__ == '__main__':
 
     r = solve_21b(entries)
     print('part 2, number of #: {}'.format(r))
-
-    # too low: 2364534
-    # correct answer: 2368161
-    # too high: 2418435
