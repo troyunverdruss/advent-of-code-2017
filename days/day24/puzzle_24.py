@@ -27,9 +27,9 @@ class Component:
 
 class Solution:
     def __init__(self):
-        self.solution = None
-        self.sum = 0
-        self.length = 0
+        self.strongest_sum = 0
+        self.longest_length = 0
+        self.longest_strength = 0
 
 
 def list_sub(_list, _remove):
@@ -43,15 +43,21 @@ def list_sub(_list, _remove):
         return l
 
 
-def add_components(must_match, parents, available_components, bridges):
+def add_components(must_match, parents, available_components, solution):
     options = list(filter(lambda c: must_match in c, available_components))
 
     if len(options) == 0:
         _sum = sum(itertools.chain.from_iterable(parents))
-        # _len = len(parents)
-        if _sum > bridges.sum:
-            bridges.solutions = parents
-            bridges.sum = _sum
+        _len = len(parents)
+        if _sum > solution.strongest_sum:
+            solution.strongest_sum = _sum
+
+        if _len > solution.longest_length:
+            solution.longest_strength = _sum
+            solution.longest_length = _len
+        elif _len >= solution.longest_length and _sum > solution.longest_strength:
+            solution.longest_strength = _sum
+            solution.longest_length = _len
 
     else:
         for option in options:
@@ -60,19 +66,20 @@ def add_components(must_match, parents, available_components, bridges):
 
             _parents = list(parents)
             _parents.append(option)
-            add_components(_next_match, _parents, _avail, bridges)
+            add_components(_next_match, _parents, _avail, solution)
 
 
 def solve_24(entries):
     components = []
     for e in entries:
         components.append(tuple(map(int, e.split('/'))))
-    bridges = Solution()
-    add_components(0, [], components, bridges)
-    return bridges.sum
+    solution = Solution()
+    add_components(0, [], components, solution)
+    return solution.strongest_sum, solution.longest_strength
 
 
 if __name__ == '__main__':
     entries = read_raw_entries('input_d24.txt')
-    r = solve_24(entries)
-    print('part 1, strongest bridge: {}'.format(r))
+    strongest, longest_strongest = solve_24(entries)
+    print('part 1, strongest bridge: {}'.format(strongest))
+    print('part 2, longest strongest {}'.format(longest_strongest))
