@@ -52,10 +52,7 @@ def add_components(must_match, parents, available_components, solution):
         if _sum > solution.strongest_sum:
             solution.strongest_sum = _sum
 
-        if _len > solution.longest_length:
-            solution.longest_strength = _sum
-            solution.longest_length = _len
-        elif _len >= solution.longest_length and _sum > solution.longest_strength:
+        if _len > solution.longest_length or (_len >= solution.longest_length and _sum > solution.longest_strength):
             solution.longest_strength = _sum
             solution.longest_length = _len
 
